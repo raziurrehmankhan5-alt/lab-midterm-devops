@@ -1,0 +1,21 @@
+name: ML Pipeline
+on:
+  push:
+    paths:
+      - 'dataset/**'
+jobs:
+  train-and-deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        run: pip3 install pandas numpy scikit-learn fastapi uvicorn joblib --break-system-packages
+      - name: Train model
+        run: python3 train.py
+      - name: Stop existing container
+        run: docker stop ml-container || true && docker rm -f ml-container || true
+      - name: Build Docker image
+        run: docker build -t ml-app .
+      - name: Run Docker container
+        run: docker run -d -p 8000:8000 --name ml-container ml-app
